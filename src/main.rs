@@ -1,6 +1,6 @@
 mod shader;
 
-use std::ffi;
+use std::{ffi, ptr};
 
 use glfw::*;
 
@@ -48,6 +48,58 @@ fn main() {
         .expect("Failed to create vert/frag shader program");
     shader.use_shader();
 
+    #[rustfmt::skip]
+    let vertices: [f32; _] = [
+        -0.5, -0.5, 0.0, 1.0, 0.7, 0.0,
+        0.5, -0.5, 0.0, 0.0, 1.0, 0.7,
+        0.0, 0.5, 0.0, 0.7, 0.0, 1.0,
+    ];
+    let indices: [u32; _] = [0, 1, 2];
+    let (mut vao, mut vbo, mut ebo) = Default::default();
+    unsafe {
+        gl::GenVertexArrays(1, &mut vao);
+        gl::GenBuffers(1, &mut vbo);
+        gl::GenBuffers(1, &mut ebo);
+
+        gl::BindVertexArray(vao);
+
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BufferData(
+            gl::ARRAY_BUFFER,
+            size_of_val(&vertices) as isize,
+            vertices.as_ptr().cast(),
+            gl::STATIC_DRAW,
+        );
+
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+        gl::BufferData(
+            gl::ELEMENT_ARRAY_BUFFER,
+            size_of_val(&indices) as isize,
+            indices.as_ptr().cast(),
+            gl::STATIC_DRAW,
+        );
+
+        gl::VertexAttribPointer(
+            0,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            6 * size_of::<f32>() as i32,
+            ptr::null::<ffi::c_void>(),
+        );
+        gl::VertexAttribPointer(
+            1,
+            3,
+            gl::FLOAT,
+            gl::FALSE,
+            6 * size_of::<f32>() as i32,
+            (3 * size_of::<f32>()) as *const ffi::c_void,
+        );
+
+        gl::EnableVertexAttribArray(0);
+        gl::EnableVertexAttribArray(1);
+    }
+
     'main_loop: loop {
         if window.should_close() {
             break 'main_loop;
@@ -57,6 +109,7 @@ fn main() {
 
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::DrawElements(gl::TRIANGLES, 3, gl::UNSIGNED_INT, ptr::null());
         }
 
         glfw.poll_events();
