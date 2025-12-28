@@ -11,7 +11,7 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(vpath: &str, fpath: &str) -> Result<Self, io::Error> {
+    pub fn build(vpath: &str, fpath: &str) -> Result<Self, io::Error> {
         let vert = fs::read_to_string(vpath)?;
         let frag = fs::read_to_string(fpath)?;
 
@@ -31,6 +31,9 @@ impl Shader {
             gl::AttachShader(program, fshader);
             gl::LinkProgram(program);
             Self::check_errors(program, ShaderType::Program)?;
+
+            gl::DeleteShader(vshader);
+            gl::DeleteShader(fshader);
 
             Ok(Shader { id: program })
         }
