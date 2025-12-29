@@ -383,6 +383,7 @@ dependencies = [
  "gl",
  "glam",
  "glfw",
+ "image",
  "tobj",
 ]
 

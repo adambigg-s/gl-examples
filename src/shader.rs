@@ -15,7 +15,7 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn build(vpath: &str, fpath: &str) -> Result<Self, io::Error> {
+    pub fn build(vpath: &'static str, fpath: &'static str) -> Result<Self, io::Error> {
         // Read in the glsl shader source
         let vert = fs::read_to_string(vpath)?;
         let frag = fs::read_to_string(fpath)?;
@@ -50,6 +50,27 @@ impl Shader {
         }
     }
 
+    // Function to apply a Vector3 uniform
+    pub fn vec3_uniform(&mut self, vec3: glam::Vec3, name: &'static str) {
+        unsafe {
+            if let Some(loc) = self.uniform_locations.get(name) {
+                // If we have applied it already, reapply to the same location
+                gl::Uniform3fv(*loc, 1, vec3.to_array().as_ptr());
+            }
+            else {
+                // Otherwise, query and stash the location
+                self.uniform_locations.insert(
+                    name,
+                    gl::GetUniformLocation(self.id, ffi::CString::new(name).unwrap().as_c_str().as_ptr()),
+                );
+                self.vec3_uniform(vec3, name);
+            }
+        }
+    }
+
+    // Function to apply a Matrix4 uniform
+    //
+    // A function is required to be made for each type of uniform that is required by any shader
     pub fn mat4_uniform(&mut self, mat4: glam::Mat4, name: &'static str) {
         unsafe {
             if let Some(loc) = self.uniform_locations.get(name) {

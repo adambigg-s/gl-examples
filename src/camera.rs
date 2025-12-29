@@ -1,6 +1,6 @@
 use crate::{mesh, renderer};
 
-const MOVE_SPEED: f32 = 0.05;
+const MOVE_SPEED: f32 = 0.25;
 const LOOK_SPEED: f32 = 0.05;
 
 #[derive(Default)]

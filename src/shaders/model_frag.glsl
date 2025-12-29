@@ -6,9 +6,11 @@ in vec2 vuv;
 out vec4 fcol;
 
 uniform sampler2D tex;
+uniform vec3 light;
 
 void main() {
-    // fcol = texture(tex, vuv);
+    vec4 texcolor = texture(tex, vuv);
+    float brightness = max(dot(normalize(light), vnor), 0.1);
 
-    fcol = vec4(vnor, 1.0);
+    fcol = texcolor * brightness;
 }

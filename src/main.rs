@@ -6,10 +6,11 @@ mod shader;
 use std::{io, mem};
 
 #[rustfmt::skip]
-const TRI_VERTICES: [f32; 18] = [
-    -0.5, -0.5, -1.0, 1.0, 0.7, 0.0,
-    0.5 , -0.5, -1.0, 0.0, 1.0, 0.7,
-    0.0 , 0.5 , -1.0, 0.7, 0.0, 1.0,
+const TRI_VERTICES: [f32; 24] = [
+    // Position           Color              UV padding
+    -0.5, -0.5, -1.0,     1.0, 0.7, 0.0,     0.0, 0.0,
+    0.5 , -0.5, -1.0,     0.0, 1.0, 0.7,     0.0, 0.0,
+    0.0 , 0.5 , -1.0,     0.7, 0.0, 1.0,     0.0, 0.0,
 ];
 const TRI_INDICES: [u32; 3] = [0, 1, 2];
 
@@ -24,17 +25,18 @@ fn hello_triangle() {
 
     // Transmute our &[f32] array into an &[Vertex] array
     let mesh = unsafe {
-        mesh::Mesh::build(mem::transmute::<&[f32; 18], &[mesh::Vertex; 3]>(&TRI_VERTICES), &TRI_INDICES)
+        mesh::Mesh::build(mem::transmute::<&[f32; 24], &[mesh::Vertex; 3]>(&TRI_VERTICES), &TRI_INDICES)
     };
 
     'main_loop: loop {
         if renderer.window.should_close() {
             break 'main_loop;
         }
+        renderer.check_exit();
 
+        // Draw
         renderer.clear_screen();
         mesh.render();
-        renderer.check_exit();
         renderer.update_frame();
     }
 }
@@ -48,25 +50,33 @@ fn hello_model() {
         .expect("Failed to create vert/frag shader program");
     shader.use_shader();
 
-    // Load a 3D model of a penguin
-    let model = mesh::Model::build("assets/emperor.obj");
+    // Load a 3D model of a penguin and position it in view of the camera
+    let mut model = mesh::Model::build("assets/emperor.obj", Some("assets/emperor.jpg"))
+        .expect("Failed to create 3D model");
+    model.transform.position += glam::vec3(0.0, -70.0, -70.0);
+    model.transform.rotation *= glam::Quat::from_rotation_x(-90.0f32.to_radians());
 
     // Make a simple camera
     let mut camera = camera::Camera::default();
+
+    let light = glam::vec3(-3.0, -7.0, 10.0);
 
     'main_loop: loop {
         if renderer.window.should_close() {
             break 'main_loop;
         }
+        // Update user inputs
+        camera.update_inputs(&renderer.window);
+        renderer.check_exit();
 
         // Apply uniforms
+        shader.vec3_uniform(light, "light");
         shader.mat4_uniform(camera.get_proj(), "proj");
         shader.mat4_uniform(camera.get_view(), "view");
 
-        camera.update_inputs(&renderer.window);
+        // Draw
         renderer.clear_screen();
         model.render(&mut shader);
-        renderer.check_exit();
         renderer.update_frame();
     }
 }

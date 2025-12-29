@@ -4,7 +4,7 @@ use glfw::*;
 
 pub const FOV_DEGREES: f32 = 90.0;
 pub const NEAR_PLANE: f32 = 0.1;
-pub const FAR_PLANE: f32 = 100.0;
+pub const FAR_PLANE: f32 = 500.0;
 
 pub const WINDOW_WIDTH: u32 = 1600;
 pub const WINDOW_HEIGHT: u32 = 1200;
@@ -49,6 +49,7 @@ impl Renderer {
 
         // Set default view
         unsafe {
+            gl::Enable(gl::MIPMAP);
             gl::Enable(gl::DEPTH_TEST);
             gl::ClearColor(WINDOW_RED, WINDOW_GRE, WINDOW_BLU, WINDOW_ALP);
             gl::Viewport(0, 0, WINDOW_WIDTH as i32, WINDOW_HEIGHT as i32);
