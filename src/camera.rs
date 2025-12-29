@@ -1,33 +1,17 @@
-use crate::renderer;
+use crate::{mesh, renderer};
 
 #[derive(Default)]
 pub struct Camera {
-    fvec: glam::Vec3,
-    rvec: glam::Vec3,
-    uvec: glam::Vec3,
-    wuvec: glam::Vec3,
-    pos: glam::Vec3,
-    pitch: f32,
-    yaw: f32,
+    pub transform: mesh::Transform,
 }
 
 impl Camera {
     pub fn new() -> Self {
-        let mut out = Camera { wuvec: glam::Vec3::Y, yaw: -90.0, ..Default::default() };
-        out.update_vectors();
-        out
-    }
-
-    pub fn update_vectors(&mut self) {
-        let (ys, yc) = self.yaw.to_radians().sin_cos();
-        let (ps, pc) = self.pitch.to_radians().sin_cos();
-        self.fvec = glam::vec3(yc * pc, ps, ys * pc).normalize();
-        self.rvec = self.fvec.cross(self.wuvec).normalize();
-        self.uvec = self.rvec.cross(self.fvec).normalize();
+        Default::default()
     }
 
     pub fn get_view(&self) -> glam::Mat4 {
-        glam::Mat4::look_at_rh(self.pos, self.pos + self.fvec, self.wuvec)
+        self.transform.to_matrix().inverse()
     }
 
     pub fn get_proj(&self) -> glam::Mat4 {

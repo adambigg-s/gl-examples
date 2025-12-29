@@ -1,5 +1,27 @@
 use std::{ffi, ptr};
 
+pub struct Transform {
+    pub scl: glam::Vec3,
+    pub pos: glam::Vec3,
+    pub rot: glam::Quat,
+}
+
+impl Transform {
+    pub fn to_matrix(&self) -> glam::Mat4 {
+        glam::Mat4::from_scale_rotation_translation(self.scl, self.rot, self.pos)
+    }
+}
+
+impl Default for Transform {
+    fn default() -> Self {
+        Self {
+            scl: glam::Vec3::ONE,
+            pos: glam::Vec3::ZERO,
+            rot: glam::Quat::IDENTITY,
+        }
+    }
+}
+
 // Ensure these are completely packed -- the shader doesn't anticipate alignment
 #[repr(C, packed)]
 pub struct Vertex {

@@ -31,6 +31,7 @@ impl Shader {
             gl::ShaderSource(fshader, 1, &ffi::CString::new(frag)?.as_ptr(), ptr::null());
             gl::CompileShader(vshader);
             gl::CompileShader(fshader);
+
             Self::check_errors(vshader, ShaderType::Shader)?;
             Self::check_errors(fshader, ShaderType::Shader)?;
 
@@ -38,6 +39,7 @@ impl Shader {
             gl::AttachShader(program, vshader);
             gl::AttachShader(program, fshader);
             gl::LinkProgram(program);
+
             Self::check_errors(program, ShaderType::Program)?;
 
             // Delete the shaders after linking into a program
@@ -80,16 +82,16 @@ impl Shader {
             match s_type {
                 | ShaderType::Shader => {
                     gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
-                    if success == 0 {
+                    if success == Default::default() {
                         gl::GetShaderInfoLog(shader, LEN as i32, ptr::null_mut(), why.as_mut_ptr().cast());
-                        return Err(io::Error::other(String::from_utf8_unchecked(why.to_vec())));
+                        return Err(io::Error::other(String::from_utf8(why.to_vec()).unwrap()));
                     }
                 }
                 | ShaderType::Program => {
                     gl::GetProgramiv(shader, gl::LINK_STATUS, &mut success);
-                    if success == 0 {
+                    if success == Default::default() {
                         gl::GetProgramInfoLog(shader, LEN as i32, ptr::null_mut(), why.as_mut_ptr().cast());
-                        return Err(io::Error::other(String::from_utf8_unchecked(why.to_vec())));
+                        return Err(io::Error::other(String::from_utf8(why.to_vec()).unwrap()));
                     }
                 }
             }
