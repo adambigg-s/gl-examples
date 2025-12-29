@@ -11,7 +11,7 @@ pub struct Shader {
     id: u32,
 
     // Integer locations of uniform values
-    uni_locs: coll::HashMap<&'static str, i32>,
+    uniform_locations: coll::HashMap<&'static str, i32>,
 }
 
 impl Shader {
@@ -46,19 +46,19 @@ impl Shader {
             gl::DeleteShader(vshader);
             gl::DeleteShader(fshader);
 
-            Ok(Shader { id: program, uni_locs: coll::HashMap::new() })
+            Ok(Shader { id: program, uniform_locations: coll::HashMap::new() })
         }
     }
 
     pub fn mat4_uniform(&mut self, mat4: glam::Mat4, name: &'static str) {
         unsafe {
-            if let Some(loc) = self.uni_locs.get(name) {
+            if let Some(loc) = self.uniform_locations.get(name) {
                 // If we have applied it already, reapply to the same location
                 gl::UniformMatrix4fv(*loc, 1, gl::FALSE, mat4.to_cols_array().as_ptr());
             }
             else {
                 // Otherwise, query and stash the location
-                self.uni_locs.insert(
+                self.uniform_locations.insert(
                     name,
                     gl::GetUniformLocation(self.id, ffi::CString::new(name).unwrap().as_c_str().as_ptr()),
                 );
@@ -77,21 +77,31 @@ impl Shader {
         const LEN: usize = 1024;
 
         let mut success = Default::default();
-        let mut why: [u8; _] = [Default::default(); LEN];
+        let mut failure_reason: [u8; _] = [Default::default(); LEN];
         unsafe {
             match s_type {
                 | ShaderType::Shader => {
                     gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success);
                     if success == Default::default() {
-                        gl::GetShaderInfoLog(shader, LEN as i32, ptr::null_mut(), why.as_mut_ptr().cast());
-                        return Err(io::Error::other(String::from_utf8(why.to_vec()).unwrap()));
+                        gl::GetShaderInfoLog(
+                            shader,
+                            LEN as i32,
+                            ptr::null_mut(),
+                            failure_reason.as_mut_ptr().cast(),
+                        );
+                        return Err(io::Error::other(String::from_utf8(failure_reason.to_vec()).unwrap()));
                     }
                 }
                 | ShaderType::Program => {
                     gl::GetProgramiv(shader, gl::LINK_STATUS, &mut success);
                     if success == Default::default() {
-                        gl::GetProgramInfoLog(shader, LEN as i32, ptr::null_mut(), why.as_mut_ptr().cast());
-                        return Err(io::Error::other(String::from_utf8(why.to_vec()).unwrap()));
+                        gl::GetProgramInfoLog(
+                            shader,
+                            LEN as i32,
+                            ptr::null_mut(),
+                            failure_reason.as_mut_ptr().cast(),
+                        );
+                        return Err(io::Error::other(String::from_utf8(failure_reason.to_vec()).unwrap()));
                     }
                 }
             }

@@ -1,23 +1,25 @@
 use std::{ffi, ptr};
 
+use crate::shader;
+
 pub struct Transform {
-    pub scl: glam::Vec3,
-    pub pos: glam::Vec3,
-    pub rot: glam::Quat,
+    pub scale: glam::Vec3,
+    pub position: glam::Vec3,
+    pub rotation: glam::Quat,
 }
 
 impl Transform {
     pub fn to_matrix(&self) -> glam::Mat4 {
-        glam::Mat4::from_scale_rotation_translation(self.scl, self.rot, self.pos)
+        glam::Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.position)
     }
 }
 
 impl Default for Transform {
     fn default() -> Self {
         Self {
-            scl: glam::Vec3::ONE,
-            pos: glam::Vec3::ZERO,
-            rot: glam::Quat::IDENTITY,
+            scale: glam::Vec3::ONE,
+            position: glam::Vec3::ZERO,
+            rotation: glam::Quat::IDENTITY,
         }
     }
 }
@@ -25,15 +27,15 @@ impl Default for Transform {
 // Ensure these are completely packed -- the shader doesn't anticipate alignment
 #[repr(C, packed)]
 pub struct Vertex {
-    pos: glam::Vec3,
-    col: glam::Vec3,
+    position: glam::Vec3,
+    color: glam::Vec3,
 }
 
 pub struct Mesh {
-    vao: u32,
-    _vbo: u32,
-    _ebo: u32,
-    icount: u32,
+    vert_array_ob: u32,
+    _vert_buffer_ob: u32,
+    _ele_buffer_ob: u32,
+    index_count: u32,
 }
 
 impl Mesh {
@@ -83,13 +85,63 @@ impl Mesh {
             gl::EnableVertexAttribArray(1);
         }
 
-        Self { vao, _vbo: vbo, _ebo: ebo, icount: indices.len() as u32 }
+        Self {
+            vert_array_ob: vao,
+            _vert_buffer_ob: vbo,
+            _ele_buffer_ob: ebo,
+            index_count: indices.len() as u32,
+        }
     }
 
     pub fn render(&self) {
         unsafe {
-            gl::BindVertexArray(self.vao);
-            gl::DrawElements(gl::TRIANGLES, self.icount as i32, gl::UNSIGNED_INT, ptr::null());
+            gl::BindVertexArray(self.vert_array_ob);
+            gl::DrawElements(gl::TRIANGLES, self.index_count as i32, gl::UNSIGNED_INT, ptr::null());
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct Model {
+    meshes: Vec<Mesh>,
+    transform: Transform,
+}
+
+impl Model {
+    pub fn build(path: &'static str) -> Self {
+        let (models, ..) = tobj::load_obj(
+            path,
+            &tobj::LoadOptions {
+                single_index: true,
+                triangulate: true,
+                ..Default::default()
+            },
+        )
+        .expect("Failed to load .obj file");
+
+        let mut meshes = Vec::new();
+        for model in models {
+            let mut vertices = Vec::new();
+            let pos = &model.mesh.positions;
+
+            #[allow(clippy::identity_op)]
+            for i in 0..(pos.len() / 3) {
+                vertices.push(Vertex {
+                    position: glam::vec3(pos[i * 3 + 0], pos[i * 3 + 1], pos[i * 3 + 2]),
+                    color: glam::vec3(0.7, 0.7, 0.7),
+                });
+            }
+
+            meshes.push(Mesh::build(&vertices, &model.mesh.indices));
+        }
+
+        Model { meshes, ..Default::default() }
+    }
+
+    pub fn render(&self, shader: &mut shader::Shader) {
+        shader.mat4_uniform(self.transform.to_matrix(), "model");
+        for mesh in &self.meshes {
+            mesh.render();
         }
     }
 }

@@ -49,6 +49,7 @@ impl Renderer {
 
         // Set default view
         unsafe {
+            gl::Enable(gl::DEPTH_TEST);
             gl::ClearColor(WINDOW_RED, WINDOW_GRE, WINDOW_BLU, WINDOW_ALP);
             gl::Viewport(0, 0, WINDOW_WIDTH as i32, WINDOW_HEIGHT as i32);
         }
