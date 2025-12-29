@@ -3,8 +3,8 @@ use std::{ffi, ptr};
 // Ensure these are completely packed -- the shader doesn't anticipate alignment
 #[repr(C, packed)]
 pub struct Vertex {
-    pos: glm::Vector3<f32>,
-    col: glm::Vector3<f32>,
+    pos: glam::Vec3,
+    col: glam::Vec3,
 }
 
 pub struct Mesh {
@@ -55,7 +55,7 @@ impl Mesh {
                 gl::FLOAT,
                 gl::FALSE,
                 size_of::<Vertex>() as i32,
-                (size_of::<glm::Vector3<f32>>()) as *const ffi::c_void,
+                (size_of::<glam::Vec3>()) as *const ffi::c_void,
             );
             gl::EnableVertexAttribArray(0);
             gl::EnableVertexAttribArray(1);
@@ -64,7 +64,7 @@ impl Mesh {
         Self { vao, _vbo: vbo, _ebo: ebo, icount: indices.len() as u32 }
     }
 
-    pub fn draw(&self) {
+    pub fn render(&self) {
         unsafe {
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, self.icount as i32, gl::UNSIGNED_INT, ptr::null());

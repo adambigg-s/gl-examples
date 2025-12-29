@@ -2,9 +2,14 @@ use std::ffi;
 
 use glfw::*;
 
+pub const FOV_DEGREES: f32 = 90.0;
+pub const NEAR_PLANE: f32 = 0.1;
+pub const FAR_PLANE: f32 = 100.0;
+
+pub const WINDOW_WIDTH: u32 = 1600;
+pub const WINDOW_HEIGHT: u32 = 1200;
+
 const WINDOW_NAME: &str = "GL Examples";
-const WINDOW_WIDTH: u32 = 1600;
-const WINDOW_HEIGHT: u32 = 1200;
 const WINDOW_RED: f32 = 15.0 / 255.0;
 const WINDOW_GRE: f32 = 25.0 / 255.0;
 const WINDOW_BLU: f32 = 40.0 / 255.0;
@@ -22,7 +27,7 @@ impl Renderer {
 
         // Create context
         glfw.window_hint(WindowHint::Focused(true));
-        glfw.window_hint(WindowHint::Resizable(true));
+        glfw.window_hint(WindowHint::Resizable(false));
         glfw.window_hint(WindowHint::ContextVersionMajor(4));
         glfw.window_hint(WindowHint::ContextVersionMinor(6));
         glfw.window_hint(WindowHint::OpenGlForwardCompat(true));
@@ -53,7 +58,7 @@ impl Renderer {
 
     pub fn clear_screen(&self) {
         unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }
 
