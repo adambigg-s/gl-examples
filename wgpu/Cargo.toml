@@ -1,0 +1,15 @@
+[package]
+name = "wgpu-examples"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+bon = "3.9.1"
+bytemuck = "1.25.0"
+env_logger = "0.11.10"
+glam = { version = "0.33.0", features = ["bytemuck"] }
+log = "0.4.30"
+pollster = "0.4.0"
+wgpu = "29.0.3"
+winit = "0.30.13"

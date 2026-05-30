@@ -51,7 +51,7 @@ fn hello_model() {
     shader.use_shader();
 
     // Load a 3D model of a penguin and position it in view of the camera
-    let mut model = mesh::Model::build("assets/emperor.obj", Some("assets/emperor.jpg"))
+    let mut model = mesh::Model::build("../assets/emperor.obj", Some("../assets/emperor.jpg"))
         .expect("Failed to create 3D model");
     model.transform.position += glam::vec3(0.0, -70.0, -70.0);
     model.transform.rotation *= glam::Quat::from_rotation_x(-90.0f32.to_radians());
