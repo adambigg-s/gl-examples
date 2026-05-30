@@ -2,7 +2,7 @@ use std::{env, sync};
 
 use winit::{application, event, keyboard, window};
 
-use crate::render::{self, Renderer};
+use crate::engine::render::{self, Renderer};
 
 fn init() {
     unsafe { env::set_var("RUST_LOG", "info") };
@@ -90,8 +90,8 @@ where
         };
         surface.configure(&device, &config);
 
-        let mut renderer = Renderer::default();
         let mut context = render::RenderContext { device, queue, surface, config };
+        let mut renderer = Renderer::new(&context);
 
         let inner_state = T::setup(&mut context, &mut renderer);
 
@@ -106,6 +106,7 @@ where
         self.context.config.width = width.max(1);
         self.context.config.height = height.max(1);
         self.context.surface.configure(&self.context.device, &self.context.config);
+        self.renderer.depth_buffer = render::Texture::depth_texture(&self.context)
     }
 
     fn render(&mut self) -> anyhow::Result<()> {

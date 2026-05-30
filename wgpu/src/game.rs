@@ -1,16 +1,19 @@
 use std::mem;
 
-use crate::{application, render};
+use crate::{
+    application,
+    engine::render::{self, GpuVertex},
+};
 
 #[repr(C)]
 #[derive(bytemuck::Pod, bytemuck::Zeroable, bon::Builder, Debug, Default, Clone, Copy)]
-pub struct Vertex {
-    pub position: [f32; 3],
-    pub color: [f32; 3],
+struct Vertex {
+    position: [f32; 3],
+    color: [f32; 3],
 }
 
-impl Vertex {
-    pub fn descriptor() -> wgpu::VertexBufferLayout<'static> {
+impl render::GpuVertex for Vertex {
+    fn descriptor() -> wgpu::VertexBufferLayout<'static> {
         const ATTRIBS: [wgpu::VertexAttribute; 2] = wgpu::vertex_attr_array![0 => Float32x3, 1=>Float32x3];
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<Self>() as u64,
@@ -20,14 +23,16 @@ impl Vertex {
     }
 }
 
-pub struct GameState {}
+pub struct GameState {
+    pub objects: Vec<u32>,
+}
 
 impl application::Application for GameState {
-    fn setup(context: &mut crate::render::RenderContext, renderer: &mut crate::render::Renderer) -> Self {
+    fn setup(context: &mut render::RenderContext, renderer: &mut render::Renderer) -> Self {
         let pipeline = {
             let shader = context.device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("Shader"),
-                source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+                source: wgpu::ShaderSource::Wgsl(include_str!("shaders/shader.wgsl").into()),
             });
 
             let render_pipline_layout =
@@ -72,6 +77,7 @@ impl application::Application for GameState {
         };
         let pid = renderer.register_pipeline(pipeline);
 
+        let mut objects = Vec::new();
         let obj1 = render::Renderable {
             mesh: render::Mesh::new(
                 bytemuck::cast_slice(&[
@@ -84,8 +90,9 @@ impl application::Application for GameState {
             ),
             uniforms: Vec::new(),
             pipeline: pid,
+            texture: None,
         };
-        renderer.register_object(obj1);
+        objects.push(renderer.register_object(obj1));
 
         let obj2 = render::Renderable {
             mesh: render::Mesh::new(
@@ -99,14 +106,17 @@ impl application::Application for GameState {
             ),
             uniforms: Vec::new(),
             pipeline: pid,
+            texture: None,
         };
-        renderer.register_object(obj2);
+        objects.push(renderer.register_object(obj2));
 
-        Self {}
+        Self { objects }
     }
 
-    fn frame(&mut self, _: &mut crate::render::RenderContext, renderer: &mut crate::render::Renderer) {
-        renderer.commands.push(render::RenderCommand { object_id: 0 });
-        renderer.commands.push(render::RenderCommand { object_id: 1 });
+    fn frame(&mut self, _: &mut render::RenderContext, renderer: &mut render::Renderer) {
+        for &obj in &self.objects {
+            renderer.commands.push(render::RenderCommand { id: obj });
+            renderer.queue_command(render::RenderCommand { id: obj });
+        }
     }
 }
