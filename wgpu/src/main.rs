@@ -1,6 +1,7 @@
 use crate::engine::application;
 
 pub mod engine;
+pub mod camera;
 pub mod game;
 
 fn main() -> anyhow::Result<()> {

@@ -1,3 +1,5 @@
 pub mod application;
-pub mod texture;
+pub mod model;
+pub mod inputs;
 pub mod render;
+pub mod texture;
